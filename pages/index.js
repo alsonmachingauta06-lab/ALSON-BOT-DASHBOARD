@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const [server, setServer] = useState("Render");
   const [number, setNumber] = useState("");
   const [code, setCode] = useState("");
   const [botId, setBotId] = useState("");
-  const [status, setStatus] = useState("Ready");
+  const [status, setStatus] = useState("SYSTEM READY");
   const [loading, setLoading] = useState(false);
+
   const timerRef = useRef(null);
 
   const stopChecking = () => {
@@ -24,8 +24,6 @@ export default function Home() {
 
       const data = await response.json();
 
-      console.log("STATUS RESPONSE:", data);
-
       const currentStatus =
         data.status ||
         data.connection ||
@@ -37,7 +35,7 @@ export default function Home() {
         currentStatus === "open" ||
         currentStatus === "online"
       ) {
-        setStatus("🟢 Connected");
+        setStatus("● BOT CONNECTED");
         stopChecking();
         return;
       }
@@ -47,20 +45,24 @@ export default function Home() {
         currentStatus === "closed" ||
         currentStatus === "logged_out"
       ) {
-        setStatus("🔴 Disconnected");
+        setStatus("● BOT DISCONNECTED");
         stopChecking();
         return;
       }
 
-      setStatus(`🟡 ${currentStatus || "Starting..."}`);
-    } catch (error) {
-      console.error("STATUS CHECK ERROR:", error);
-      setStatus("🟡 Checking connection...");
+      setStatus(
+        `● ${currentStatus
+          ? currentStatus.toUpperCase()
+          : "CONNECTING..."}`
+      );
+    } catch {
+      setStatus("● CHECKING CONNECTION...");
     }
   };
 
   const startStatusChecking = (id) => {
     stopChecking();
+
     checkStatus(id);
 
     timerRef.current = setInterval(() => {
@@ -70,7 +72,7 @@ export default function Home() {
 
   const generateCode = async () => {
     if (!number.trim()) {
-      setStatus("Please enter your WhatsApp number.");
+      setStatus("● ENTER WHATSAPP NUMBER");
       return;
     }
 
@@ -78,7 +80,7 @@ export default function Home() {
     setCode("");
     setBotId("");
     stopChecking();
-    setStatus("Requesting pairing code...");
+    setStatus("● GENERATING PAIRING CODE...");
 
     try {
       const response = await fetch("/api/pair", {
@@ -87,20 +89,17 @@ export default function Home() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          server,
           number: number.trim()
         })
       });
 
       const data = await response.json();
 
-      console.log("PAIR RESPONSE:", data);
-
       if (data.pairingCode) {
         setCode(data.pairingCode);
-        setStatus("🟡 Pairing code generated!");
+        setStatus("● PAIRING CODE READY");
       } else if (data.error) {
-        setStatus(data.error);
+        setStatus(`● ${data.error.toUpperCase()}`);
         setLoading(false);
         return;
       }
@@ -110,8 +109,8 @@ export default function Home() {
         startStatusChecking(data.botId);
       }
     } catch (error) {
-      console.error("PAIR ERROR:", error);
-      setStatus("Could not connect to ALSON-BOT on Render.");
+      console.error(error);
+      setStatus("● CONNECTION ERROR");
     }
 
     setLoading(false);
@@ -122,96 +121,100 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="container">
-      <div className="card">
+    <main className="gojoPage">
 
-        <div className="hero">
-          <img
-            src="/gojo-dashboard.png"
-            alt="Gojo"
-          />
+      <div className="gojoOverlay"></div>
 
-          <div className="heroText">
-            <h1>ALSON XMD</h1>
-            <p>MINI BOT DASHBOARD</p>
-          </div>
+      <section className="dashboard">
+
+        <header className="brand">
+          <div className="brandLine"></div>
+
+          <h1>ALSON XMD</h1>
+
+          <p>MINI BOT SYSTEM</p>
+
+          <div className="brandLine"></div>
+        </header>
+
+        <div className="systemStatus">
+          <span className="statusLight"></span>
+          {status}
         </div>
 
-        <div className="content">
+        <div className="panel">
 
-          <div className="status">
-            <span className="dot"></span>
-            SERVER: {server.toUpperCase()}
+          <div className="panelTitle">
+            <span>01</span>
+            LINK WHATSAPP
           </div>
 
-          <div className="section">
-            <label>🖥️ Choose Server</label>
+          <label>WHATSAPP NUMBER</label>
 
-            <select
-              value={server}
-              onChange={(e) => setServer(e.target.value)}
-            >
-              <option value="Render">
-                Render
-              </option>
-            </select>
-          </div>
+          <input
+            type="tel"
+            value={number}
+            onChange={(e) => setNumber(e.target.value)}
+            placeholder="+263XXXXXXXXX"
+          />
 
-          <div className="section">
-            <label>📱 WhatsApp Number</label>
-
-            <input
-              type="tel"
-              placeholder="+263XXXXXXXXX"
-              value={number}
-              onChange={(e) => setNumber(e.target.value)}
-            />
-
-            <small>
-              Enter your WhatsApp number with country code.
-            </small>
-          </div>
+          <p className="hint">
+            Enter your number with country code.
+          </p>
 
           <button
             onClick={generateCode}
             disabled={loading}
           >
             {loading
-              ? "⚡ GENERATING..."
-              : "⚡ GENERATE PAIRING CODE"}
+              ? "GENERATING..."
+              : "GENERATE PAIRING CODE"}
           </button>
 
-          {code && (
-            <div className="codeBox">
-              <p>🔑 YOUR PAIRING CODE</p>
+        </div>
 
-              <strong>{code}</strong>
+        {code && (
+          <div className="codePanel">
 
-              <small>
-                WhatsApp → Linked Devices → Link with phone number instead
-              </small>
+            <div className="panelTitle">
+              <span>02</span>
+              PAIRING CODE
             </div>
-          )}
 
-          {botId && (
-            <div className="status">
-              🤖 BOT ID
-              <br />
+            <div className="pairCode">
+              {code}
+            </div>
+
+            <p>
+              WhatsApp → Linked Devices → Link with
+              phone number instead
+            </p>
+
+          </div>
+        )}
+
+        {botId && (
+          <div className="botPanel">
+
+            <div className="panelTitle">
+              <span>03</span>
+              BOT SESSION
+            </div>
+
+            <div className="botId">
               {botId}
             </div>
-          )}
 
-          <div className="status">
-            <span className="dot"></span>
-            {status}
           </div>
+        )}
 
-          <footer>
-            Powered by <b>Alson Machingauta</b>
-          </footer>
+        <footer>
+          <span>ALSON XMD</span>
+          <b>POWERED BY ALSON MACHINGAUTA</b>
+        </footer>
 
-        </div>
-      </div>
+      </section>
+
     </main>
   );
 }
