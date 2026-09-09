@@ -25,7 +25,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           server,
-          phone: number.trim()
+          number: number.trim()
         })
       });
 
