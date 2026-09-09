@@ -18,7 +18,6 @@ export default function Home() {
     setStatus("Requesting pairing code...");
 
     try {
-      // Backend endpoint will be connected after we finish the dashboard.
       const response = await fetch("/api/pair", {
         method: "POST",
         headers: {
@@ -26,20 +25,29 @@ export default function Home() {
         },
         body: JSON.stringify({
           server,
-          number: number.trim()
+          phone: number.trim()
         })
       });
 
       const data = await response.json();
 
-      if (data.code) {
-        setCode(data.code);
+      console.log("PAIR API RESPONSE:", data);
+
+      if (data.pairingCode) {
+        setCode(data.pairingCode);
         setStatus("Pairing code generated!");
+      } else if (data.error) {
+        setStatus(data.error);
+      } else if (data.botId) {
+        setStatus(
+          `Bot created (${data.botId}). Waiting for pairing code...`
+        );
       } else {
-        setStatus(data.error || "Could not generate pairing code.");
+        setStatus("Could not generate pairing code.");
       }
     } catch (error) {
-      setStatus("Dashboard is not connected to the bot backend yet.");
+      console.error("PAIR DASHBOARD ERROR:", error);
+      setStatus("Could not connect to ALSON-BOT on Render.");
     }
 
     setLoading(false);
