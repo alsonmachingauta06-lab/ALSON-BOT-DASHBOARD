@@ -16,7 +16,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const response = await fetch("https://alson-bot.onrender.com/api/pair", {
+    const response = await fetch("https://alson-bot-mini.onrender.com/api/pair", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
